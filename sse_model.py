@@ -229,12 +229,12 @@ class SSEModel(object):
     with tf.variable_scope('source_only_encoder'):
       # TODO: need play with forgetGate and peeholes here
       if self.use_lstm:
-        src_single_cell = tf.nn.rnn_cell.LSTMCell(self.src_cell_size, forget_bias=1.0, use_peepholes=False)
+        src_single_cell = tf.contrib.rnn.LSTMCell(self.src_cell_size, forget_bias=1.0, use_peepholes=False)
       else:
-        src_single_cell = tf.nn.rnn_cell.GRUCell(self.src_cell_size)
+        src_single_cell = tf.contrib.rnn.GRUCell(self.src_cell_size)
       src_cell = src_single_cell
       if self.num_layers > 1:
-        src_cell = tf.nn.rnn_cell.MultiRNNCell([src_single_cell] * self.num_layers)
+        src_cell = tf.contrib.rnn.MultiRNNCell([src_single_cell] * self.num_layers)
 
       src_output, _ = tf.nn.dynamic_rnn(src_cell, self.src_input_distributed, sequence_length=self._src_lens,
                                         dtype=tf.float32)
@@ -258,12 +258,12 @@ class SSEModel(object):
     with tf.variable_scope('source_encoder'):
       # TODO: need play with forgetGate and peeholes here
       if self.use_lstm:
-        src_single_cell = tf.nn.rnn_cell.LSTMCell(self.src_cell_size, forget_bias=1.0, use_peepholes=False)
+        src_single_cell = tf.contrib.rnn.LSTMCell(self.src_cell_size, forget_bias=1.0, use_peepholes=False)
       else:
-        src_single_cell = tf.nn.rnn_cell.GRUCell(self.src_cell_size)
+        src_single_cell = tf.contrib.rnn.GRUCell(self.src_cell_size)
       src_cell = src_single_cell
       if self.num_layers > 1:
-        src_cell = tf.nn.rnn_cell.MultiRNNCell([src_single_cell] * self.num_layers)
+        src_cell = tf.contrib.rnn.MultiRNNCell([src_single_cell] * self.num_layers)
 
       src_output, _ = tf.nn.dynamic_rnn(src_cell, self.src_input_distributed, sequence_length=self._src_lens,
                                         dtype=tf.float32)
@@ -277,12 +277,12 @@ class SSEModel(object):
     with tf.variable_scope('target_encoder'):
       # need train target model
       # TODO: need play with forgetGate and peeholes here
-      tgt_single_cell = tf.nn.rnn_cell.GRUCell(self.tgt_cell_size)
+      tgt_single_cell = tf.contrib.rnn.GRUCell(self.tgt_cell_size)
       if self.use_lstm:
-        tgt_single_cell = tf.nn.rnn_cell.LSTMCell(self.tgt_cell_size, forget_bias=1.0, use_peepholes=False)
+        tgt_single_cell = tf.contrib.rnn.LSTMCell(self.tgt_cell_size, forget_bias=1.0, use_peepholes=False)
       tgt_cell = tgt_single_cell
       if self.num_layers > 1:
-        tgt_cell = tf.nn.rnn_cell.MultiRNNCell([tgt_single_cell] * self.num_layers)
+        tgt_cell = tf.contrib.rnn.MultiRNNCell([tgt_single_cell] * self.num_layers)
 
       tgt_output, _ = tf.nn.dynamic_rnn(tgt_cell, self.tgt_input_distributed, sequence_length=self._tgt_lens,
                                         dtype=tf.float32)
@@ -300,13 +300,13 @@ class SSEModel(object):
     with tf.variable_scope('shared_encoder'):
       # TODO: need play with forgetGate and peeholes here
       if self.use_lstm:
-        src_single_cell = tf.nn.rnn_cell.LSTMCell(self.src_cell_size, forget_bias=1.0, use_peepholes=False)
+        src_single_cell = tf.contrib.rnn.LSTMCell(self.src_cell_size, forget_bias=1.0, use_peepholes=False)
       else:
-        src_single_cell = tf.nn.rnn_cell.GRUCell(self.src_cell_size)
+        src_single_cell = tf.contrib.rnn.GRUCell(self.src_cell_size)
 
       src_cell = src_single_cell
       if self.num_layers > 1:
-        src_cell = tf.nn.rnn_cell.MultiRNNCell([src_single_cell] * self.num_layers)
+        src_cell = tf.contrib.rnn.MultiRNNCell([src_single_cell] * self.num_layers)
 
       #compute source sequence related tensors
       src_output, _ = tf.nn.dynamic_rnn(src_cell, self.src_input_distributed, sequence_length=self._src_lens,
@@ -346,7 +346,7 @@ class SSEModel(object):
       #         tf.expand_dims( self._labels, 1 ), self.neg_sample_size, self.targetSpaceSize) )
 
       #doing full target space softmax loss at here
-      self.loss = tf.reduce_mean( tf.nn.sparse_softmax_cross_entropy_with_logits( self.similarity, self._labels) )
+      self.loss = tf.reduce_mean( tf.nn.sparse_softmax_cross_entropy_with_logits( logits=self.similarity, labels=self._labels) )
 
       #TODO: try sigmoid loss function later: tf.nn.sigmoid_cross_entropy_with_logits(logits, targets, name=None)
 
@@ -415,8 +415,8 @@ class SSEModel(object):
      * loss (moving average)
 
     """
-    loss = tf.scalar_summary("loss (raw)", self.loss)
-    return tf.merge_summary([loss])
+    loss = tf.summary.scalar("loss (raw)", self.loss)
+    return tf.summary.merge([loss])
 
 
   def get_train_batch(self, train_set, batch_size, tgtID_FullLabelMap):
